@@ -1,0 +1,5 @@
+node_modules
+media
+media/image_cache
+old
+.env

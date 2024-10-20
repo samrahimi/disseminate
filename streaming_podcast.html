@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Low Latency Streaming Playback</title>
+</head>
+<body>
+    <textarea id="podcast_script" rows="6" cols="50">
+ALICE: You are a hamster, and you really need to get a life
+
+BOB: Alice, you're making me feel unsafe... stop that
+    </textarea>
+    
+    
+    <div>
+    <button id="generate_only">Get Link, Generate and Download (audio/mpeg)</button>&nbsp;<a download href="#" id="generate_only_link"></a>
+</div>
+
+    <div>
+    <button id="generate_and_play">In-Page Generate and Play (audio/mpeg)</button>
+</div>
+
+    <div>
+    <button id="play_button">Stream while Generating (audio/x-utterance-stream)</button>
+</div>
+    <br><br>
+    <!-- Audio element to play the segments -->
+    <audio id="audio_player" controls></audio>
+
+    <!-- Include jQuery (if not already included) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="client/sse-polyfill.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            const playlist = [];
+            let currentIndex = 0;
+            let isPlaying = false;
+            let eventSource = null;
+
+
+            $("#generate_only").on("click", function() {
+                const scriptArgs= encodeURIComponent ($("#podcast_script").val());
+                const url = `http://localhost:8000/generate/speech?payload=${scriptArgs}&api_key=their_api_key`;
+                //download the audio at url and save locally as mp3 file
+                $("#generate_only_link").attr("href", url).attr("target","_blank").text("Download MP3").show();
+                //window.location.href = url;
+            });
+            $("#generate_and_play").on("click", function() {
+                const scriptArgs= encodeURIComponent ($("#podcast_script").val());
+                const url = `http://localhost:8000/generate/speech?payload=${scriptArgs}&api_key=their_api_key`;
+                $("#generate_and_play").attr("disabled", "disabled").text("Generating...");
+                $("#audio_player").attr("src", url)
+                const audioPlayer = $('#audio_player')[0];
+
+                audioPlayer.load();
+                audioPlayer.play();
+            })
+
+
+            $("#play_button").on("click", function() {
+                // Reset the playlist and state
+                playlist.length = 0;
+                currentIndex = 0;
+                isPlaying = false;
+
+                // Disable the button to prevent multiple clicks
+                $("#play_button").prop("disabled", true).text("Generating...");
+
+                const scriptText = $("#podcast_script").val();
+
+                // Start the SSE connection
+                startSSE(scriptText);
+            });
+
+            function startSSE(script) {
+                const apiKey = 'their_api_key'; // Replace with actual API key management
+                const url = `http://localhost:8000/generate/speech/stream?api_key=${apiKey}`;
+
+                // Initialize the EventSource
+                eventSource = new EventSourcePolyfill(url, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    payload: JSON.stringify({ payload: script })
+                });
+
+                eventSource.addEventListener('audio_segment', function(event) {
+                    const audioUrl = event.data;
+                    playlist.push(audioUrl);
+                    console.log('Received audio segment:', audioUrl);
+
+                    // Start playback if not already playing
+                    if (!isPlaying) {
+                        playSegment(currentIndex);
+                        isPlaying = true;
+                    }
+                });
+
+                eventSource.addEventListener('audio_complete', function(event) {
+                    console.log('All audio segments received. Combined audio URL:', event.data);
+                    // Optionally handle the combined audio
+                    eventSource.close();
+                });
+
+                eventSource.addEventListener('error', function(event) {
+                    console.error('Error:', event.data || 'Connection error');
+                    eventSource.close();
+                    $("#play_button").prop("disabled", false).text("Create Podcast");
+                });
+            }
+
+            function playSegment(index) {
+                if (index >= playlist.length) {
+                    // Wait for the next segment to be available
+                    console.log('Waiting for the next segment...');
+                    return;
+                }
+
+                const audioUrl = playlist[index];
+                const audioPlayer = $('#audio_player')[0];
+                audioPlayer.src = audioUrl;
+                audioPlayer.load();
+                audioPlayer.play();
+
+                audioPlayer.onended = function() {
+                    currentIndex++;
+                    if (currentIndex < playlist.length) {
+                        playSegment(currentIndex);
+                    } else if (eventSource && eventSource.readyState !== EventSource.CLOSED) {
+                        // Wait for the next segment if the stream is still open
+                        playSegment(currentIndex);
+                    } else {
+                        // All segments played
+                        isPlaying = false;
+                        $("#play_button").prop("disabled", false).text("Create Podcast");
+                        console.log('Playback completed.');
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>
