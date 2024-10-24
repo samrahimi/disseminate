@@ -87,7 +87,7 @@ async function generateAudio(speakerName, content) {
   const actualVoiceId = voiceLookupTable[speakerName] || voiceLookupTable['DEFAULT'];
   const fileName = path.join(MEDIA_FOLDER, `${uuidv4()}.mp3`);
 
-  await runOpenAITTS(content, fileName, actualVoiceId);
+  await runOpenAITTS(content, fileName, actualVoiceId, 'tts-1-hd');
   return fileName;
 }
 
