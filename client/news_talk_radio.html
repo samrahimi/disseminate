@@ -182,7 +182,7 @@ FEMALE_GUEST - Nice normal voice, Female
                 }
 
                 // Call API to generate podcast audio
-                const apiUrl = `http://localhost:8000/generate/speech?payload=${encodeURIComponent(script.trim())}`;
+                const apiUrl = `https://defactofficial-mmapi.hf.space/generate/speech?payload=${encodeURIComponent(script.trim())}`;
                 $('#audio_player').attr('src', apiUrl);
                 $('#audio_player').removeClass('d-none');
                 const audioPlayerStream = $('#audio_player')[0];
@@ -203,7 +203,7 @@ FEMALE_GUEST - Nice normal voice, Female
                 ${scriptTags[0]}
                     $("#play_button").on("click", (e) => {
                         var podcast_script = encodeURIComponent($("#podcast_script").val());
-                        $("#podcast_stream_url").attr("src", "http://nonapi.defact.org/generate/speech?payload="+podcast_script+"&api_key=their_api_key");
+                        $("#podcast_stream_url").attr("src", "https://defactofficial-mmapi.hf.space/generate/speech?payload="+podcast_script+"&api_key=their_api_key");
                     });
                 ${scriptTags[1]}`;
                 $('#integration_code').text(integrationCode).removeClass('d-none');

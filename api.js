@@ -12,9 +12,13 @@ const app = express();
 app.use(express.json()); // To parse JSON payloads
 app.use(cors()); // Enable CORS for all routes
 
+require('dotenv').config()
+
+
 const MEDIA_FOLDER = process.env.MMAPI_MEDIA_FOLDER || 'media';
 const BASE_URL = process.env.MMAPI_BASE_URL || 'http://localhost:8000';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+
 // Ensure the MEDIA_FOLDER directory exists
 async function ensureDir(dir) {
   try {

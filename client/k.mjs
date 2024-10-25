@@ -15,3 +15,5 @@ function k() {
 }
 
 export {k}
+
+console.log(k())

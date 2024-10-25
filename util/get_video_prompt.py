@@ -22,14 +22,45 @@ import base64
 from mimetypes import guess_type
 
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path="../.env")
 
 
-preferred_txt2image_diffusion_model= "black-forest-labs/FLUX.1-dev"
+#preferred_txt2image_diffusion_model= "black-forest-labs/FLUX.1-dev"
+#nsfw_txt2image_diffusion_model= "black-forest-labs/FLUX.1-dev-nsfw"
+
+standard_settings = {
+    "endpoint": "https://api.openai.com/v1",
+    "api_key": os.getenv("OPENAI_API_KEY"),
+    "language_model": "gpt-4o",
+    "diffusion_model": "black-forest-labs/FLUX.1-dev",
+}
+
+uncensored_settings = {
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "api_key": os.getenv("OPENROUTER_API_KEY"),
+    "language_model": "cohere/command-r-plus-08-2024",
+    "diffusion_model": "stabilityai/stable-diffusion-3.5-large"
+}
+
 width=1024
 height=1024
 
 
-txt2image_endpoint=f"http://localhost:8000/generate/image?model={preferred_txt2image_diffusion_model}&prompt="
+txt2image_endpoint=f"http://localhost:8000/generate/image?model=<SELECTED_DIFFUSION_MODEL>&prompt="
+
+nsfw_preflight="""You are an attentive and accurate content moderator for a generative video and image product.
+Your job is to determine if the user's request is unsafe in any way (nudity, hate, copyright matters, etc)
+
+If you believe the request is safe, say "SAFE". If you believe the request is unsafe, say "UNSAFE"
+
+Do not say anything else. Just respond with "SAFE" or "UNSAFE" """
+
+safety_checker_model="gpt-4o-mini" #openai hosted version
+
+
 
 
 sys_prompt_i2v = """
